@@ -16,11 +16,11 @@ Two list objects: one named \code{richness_group} and another named \code{topabu
 the latter contains the subset of data of each group (the aforementioned dataframes).
 }
 \description{
-This functions gives the specific richness for each \emph{group} of data contained in the argument \code{MYGROUP} (e.g. treatments, types of
-site, sites etc.). Additionally, \code{super_rich.group()} also returns a dataframe containing all the species data for each \emph{group}, sorted out by
-decreasing order of abundance. \cr
+This functions gives the specific richness (mean and standard deviation) for each \emph{group} of data contained in the argument
+\code{MYGROUP} (e.g. treatments, types of site, sites etc.). Additionally, \code{super_rich.group()} also returns a dataframe containing all the species
+data for each \emph{group}, sorted out by decreasing order of abundance. \cr
 For instance, if \code{MYDATA} is a dataframe containing the abundance (or presence/absence) of 100 species in 30 sites
-belonging to three groups of equal size named A, B and C (detailed in \code{MYGROUP}); then \code{super_rich.group()} will return the
+belonging to three groups of equal size named A, B and C (detailed in \code{MYGROUP}); then \code{super_rich.group()} will return the mean
 \strong{specific richness} of the A, B and C sites, and create 3 different dataframes:
 \itemize{
 \item One containing all the species of the 10 sites of group A (ordered by decreasing abundance);

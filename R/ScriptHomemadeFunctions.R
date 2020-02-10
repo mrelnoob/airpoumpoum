@@ -7,9 +7,14 @@
 #
 # 17/01/2020: Creation of the airpoumpoum package
 # 17/01/2020: Creation of the functions: se.m() ; IC95 ; rar.rm_v2() ; comb_mod() ;
-# 21/01/2020: Creation of the functions: sensiNMDS() ;
-# 23/01/2020: Creation of the functions: posthoc.NMDS() ;
-# 27/01/2020: Creation of the functions: super_rich.group() ;
+# 21/01/2020: Creation of the function: sensiNMDS() ;
+# 23/01/2020: Creation of the function: posthoc.NMDS() ;
+# 27/01/2020: Creation of the function: super_rich.group() ;
+# 28/01/2020: Uploading of the package on GitHub --> To install package use: devtools::install_github("mrelnoob/airpoumpoum")
+# 29/01/2020: Creation of the function: super_distriplot();
+# 31/01/2020: Updates on the super_distriplot() function.
+# 04/02/2020: Updates on the super_rich.group() function.
+
 
 
 
@@ -301,11 +306,11 @@ data.frame(comp=paste(mod1,mod2), pposthoc, pposthoc_adj, Fposthoc)
 
 #' Computation of species richness per groups
 #'
-#' @description This functions gives the specific richness for each \emph{group} of data contained in the argument \code{MYGROUP} (e.g. treatments, types of
-#' site, sites etc.). Additionally, \code{super_rich.group()} also returns a dataframe containing all the species data for each \emph{group}, sorted out by
-#' decreasing order of abundance. \cr
+#' @description This functions gives the specific richness (mean and standard deviation) for each \emph{group} of data contained in the argument
+#' \code{MYGROUP} (e.g. treatments, types of site, sites etc.). Additionally, \code{super_rich.group()} also returns a dataframe containing all the species
+#' data for each \emph{group}, sorted out by decreasing order of abundance. \cr
 #' For instance, if \code{MYDATA} is a dataframe containing the abundance (or presence/absence) of 100 species in 30 sites
-#' belonging to three groups of equal size named A, B and C (detailed in \code{MYGROUP}); then \code{super_rich.group()} will return the
+#' belonging to three groups of equal size named A, B and C (detailed in \code{MYGROUP}); then \code{super_rich.group()} will return the mean
 #' \strong{specific richness} of the A, B and C sites, and create 3 different dataframes:
 #'
 #' * One containing all the species of the 10 sites of group A (ordered by decreasing abundance);
@@ -338,27 +343,96 @@ super_rich.group <- function(MYDATA, MYGROUP){
 
   MYDATA$treatment <- MYGROUP
   richness_group <- NULL
-  richness_group$treatment <- unique(MYGROUP)
   topabun_group <- NULL
 
-  for(i in unique(MYGROUP)){
+  for(i in 1:length(unique(MYGROUP))){
 
 
-    fff <- MYDATA[MYDATA$treatment == i,]
+    fff <- MYDATA[MYDATA$treatment == unique(MYGROUP)[i],]
     fff1 <- fff[, 1:ncol(fff)-1]
     fff2 <- rar.rm_V2(fff1, NB_REL = 1, ABUN = 1)
     nbl <- nrow(fff2)+1
-    fff2[nbl,] <- apply(fff2, 2, sum)
-    fff3 <- fff2[, order(fff2[nbl,], decreasing = T)]
+    fff3 <- fff2
+    fff3[nbl,] <- apply(fff3, 2, sum)
+    fff4 <- fff3[, order(fff3[nbl,], decreasing = T)]
 
-    richness_group$richness[i] <- ncol(fff3)
-    topabun_group[[i]] <- data.frame(fff3) # NOTE IMPORTANTE: sur ces 2 lignes de code, en fonction du nombre de [], on ne fait pas du tout la m?me chose !
+    topabun_group[[i]] <- data.frame(fff4) # NOTE IMPORTANTE: sur ces 2 lignes de code, en fonction du nombre de [], on ne fait pas du tout la m?me chose !
+
+    tt <- data.frame(apply(X = fff2, c(1,2), function(x) if (x > 0) 1 else 0))
+    tt$richness <- apply(X = tt, MARGIN = 1, FUN = sum)
+
+
+    richness_group$treatment[i] <- as.character(unique(MYGROUP))[i]
+    richness_group$mean_richness[i] <- mean(tt$richness)
+    richness_group$sd_richness[i] <- sd(tt$richness)
 
   }
 
+  richness_group <- as.data.frame(richness_group)
   output <- list(richness_group, topabun_group)
 
   return(output)
 }
 
 
+
+
+
+##### ----------------------------------- super_distriplot() ----------------------------------- #####
+
+#' Creation of a multi-plot of variables distribution
+#'
+#' @description The \code{super_distriplot()} function plots, in a single viewing window, the distribution of \code{MYVARIABLES} for all the \code{GROUPS} to
+#' which they belong. It is very useful to quickly visualize if the \emph{among groups} \strong{normality assumption} is respected or not. The function
+#' additionally plots the curve of the \emph{probability density function} of each sampled population, and that of a \strong{Normal} distribution.
+#'
+#' @note For graphical convenience, the function cannot plot too many distributions in a single window. For that reason, only a maximum of 4 different
+#' groups and 5 different variables is allowed as inputs in the function (giving a window with 20 plots). \cr
+#' If ou wish to plot more variables and/or groups, please divide your data and run the function several times on each subset. \cr
+#' Also, if you wish to plot a single variable divided in different groups, you need to specify \code{MYVARIABLES} that your \emph{single vector} (i.e.
+#' your variable) is a dataframe. Otherwise, \code{super_distriplot()} will not be able to write a proper title to the histograms. If you want a proper
+#' title, then use a synthax as follows: \code{... MYVARIABLES = as.data.frame(myvector) ...} or, for a \emph{single column}, \code{... MYVARIABLES =
+#' as.data.frame(mydata$myvariable) ...} (see also 'examples').
+#'
+#' @param MYVARIABLES A numeric vector or an array (up to 5) of numeric vectors (typically, variables as columns of a dataframe or matrix).
+#' @param GROUPS A factor whose length matches the length of the variables of interest. The maximal number of groups/treatments to divide the observations
+#' is limited to 4 (see 'note').
+#' @param breaks A value, a vector of values, an algorithm etc. to set the width of the bars in the histograms (for more details on the possible input
+#' values, please refer to the help page of \code{\link[graphics:hist]{hist}}).
+#'
+#' @return A vinwing window with as many histograms as there are combinations between the input variables and groups (up to 20).
+#' @import stats graphics
+#' @export
+#'
+#' @examples library(vegan)
+#' data("dune")
+#' data("dune.env")
+#' super_distriplot(MYVARIABLES = dune[,3:6], GROUPS = dune.env[,4], breaks = 5)
+#' # For a single variable (e.g. Bellis perennis):
+#' super_distriplot(MYVARIABLES = as.data.frame(dune$Bellpere), GROUPS = dune.env[,4], breaks = 5)
+super_distriplot <- function(MYVARIABLES, GROUPS, breaks){
+
+  mydataset <- as.data.frame(MYVARIABLES)
+  mydataset$treatment <- GROUPS
+  mydataset$treatment <- droplevels(mydataset$treatment)
+
+  nb_gr <- length(unique(mydataset$treatment))
+  ifelse((ncol(mydataset)-1) == 1, nb_var <- 1, nb_var <- ncol(mydataset)-1)
+
+  par(mfrow=c(nb_gr,nb_var))
+  for (j in 1:nb_gr){
+    for (i in 1:nb_var){
+
+      tt <- mydataset[mydataset$treatment == levels(mydataset$treatment)[j],i]
+      tt <- as.data.frame(tt)
+
+      hist(tt[,1], breaks = breaks, probability = TRUE, xlab = NULL,
+           border = "pink", col = "coral3", main = paste("Distribution of", colnames(mydataset)[i], "\nfor", levels(mydataset$treatment)[j]))
+      lines(density(tt[,1]), col = "gray 12", lwd = 2)
+      f <- function(x){
+        dnorm(x = x, mean = mean(tt[,1]), sd = sd(tt[,1]))}
+      curve(f, add = TRUE, col = "red", lwd = 2, lty = 2)
+
+    }
+  }
+}
