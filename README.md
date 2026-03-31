@@ -1,2 +1,2 @@
 # airpoumpoum
-Contains the "airpoumpoum" R package (mine)!
+Contains my own personal R package called {airpoumpoum} (hasn't been updated in years)! 
